@@ -109,7 +109,7 @@ crc16ns (uint16_t* crc16nsP, uint8_t* buf)
 		 oldcrc=updcrc(0,updcrc(0,oldcrc));
 
 		 // ********* The next line needs to be changed ***********
-		 *crc16nsP = 0;
+		 *crc16nsP = oldcrc;
 
 		 //sendline((int)oldcrc>>8);
 		 //sendline((int)oldcrc);
