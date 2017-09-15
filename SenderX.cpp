@@ -66,9 +66,9 @@ void SenderX::genBlk(blkT blkBuf)
 	else
 	{	if(bytesRd<128)
 		{
-			for(int i=bytesRd; i<(CHUNK_SZ+3);i++)
+			for(int i=bytesRd; i<CHUNK_SZ;i++)
 			{
-				blkBuf[i]=CTRL_Z;  // Fill in the gap w/ CTRL_Z
+				blkBuf[i+3]=CTRL_Z;  // Fill in the gap w/ CTRL_Z
 			}
 		}
 		blkBuf[0]=SOH;
