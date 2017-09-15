@@ -44,7 +44,7 @@
 using namespace std;
 
 SenderX::SenderX(const char *fname, int d)
-	:PeerX(d, fname), bytesRd(-1), blkNum(255)
+:PeerX(d, fname), bytesRd(-1), blkNum(255)
 {
 }
 
@@ -60,44 +60,43 @@ prepared or if the input file is empty (i.e. has 0 length).
 void SenderX::genBlk(blkT blkBuf)
 {
 	// ********* The next line needs to be changed ***********
-	if (-1 == (bytesRd = myRead(transferringFileD, &blkBuf[3], CHUNK_SZ)))
+	if (-1 == (bytesRd = myRead(transferringFileD, &blkBuf[3], CHUNK_SZ )))
 		ErrorPrinter("myRead(transferringFileD, &blkBuf[0], CHUNK_SZ )", __FILE__, __LINE__, errno);
 	// ********* and additional code must be written ***********
 	else
-	{
-		if (bytesRd<128)
+	{	if(bytesRd<128)
 		{
-			for (int i = bytesRd; i<(CHUNK_SZ + 3); i++)
+			for(int i=bytesRd; i<(CHUNK_SZ+3);i++)
 			{
-				blkBuf[i] = CTRL_Z;  // Fill in the gap w/ CTRL_Z
+				blkBuf[i]=CTRL_Z;  // Fill in the gap w/ CTRL_Z
 			}
 		}
-		blkBuf[0] = SOH;
-		blkBuf[1] = blkNum;
-		blkBuf[2] = 255 - blkNum;
+		blkBuf[0]=SOH;
+		blkBuf[1]=blkNum;
+		blkBuf[2]=255-blkNum;
 
-		int sum = 0;
-		for (int i = 3; i< CHUNK_SZ; i++)
-			sum += blkBuf[i];
+		if(!Crcflg)
+		{	int sum=0;
+			for(int i= 3; i< CHUNK_SZ+3;i++)	sum+=blkBuf[i];
 
-		if (!Crcflg)
-		{
-			blkBuf[130] = 256 % sum;
+			blkBuf[130]=sum%256;
+			cout << endl;
 		}
 		else
 		{
 			uint16_t test;
 			crc16ns(&test, blkBuf);
-			blkBuf[130] = (uint8_t)(test >> 8);
-			blkBuf[131] = (uint8_t)(test);
+			blkBuf[130]=(int)test>>8;
+			blkBuf[131]=(int)test;
 		}
+
 	}
 }
 
 void SenderX::sendFile()
 {
 	transferringFileD = myOpen(fileName, O_RDWR, 0);
-	if (transferringFileD == -1) {
+	if(transferringFileD == -1) {
 		cout /* cerr */ << "Error opening input file named: " << fileName << endl;
 		result = "OpenError";
 	}
@@ -106,34 +105,32 @@ void SenderX::sendFile()
 
 		blkNum = 0; // but first block sent will be block #1, not #0
 
-					// do the protocol, and simulate a receiver that positively acknowledges every
-					//	block that it receives.
+		// do the protocol, and simulate a receiver that positively acknowledges every
+		//	block that it receives.
 
-					// assume 'C' or NAK received from receiver to enable sending with CRC or checksum, respectively
+		// assume 'C' or NAK received from receiver to enable sending with CRC or checksum, respectively
 		genBlk(blkBuf); // prepare 1st block
 		while (bytesRd)
 		{
-			blkNum++; // 1st block about to be sent or previous block was ACK'd
+			blkNum ++; // 1st block about to be sent or previous block was ACK'd
 
-					  // ********* fill in some code here to send a block ***********
-
-			if (!Crcflg)
-				myWrite(transferringFileD, blkBuf, BLK_SZ);
+			// ********* fill in some code here to send a block ***********
+			if(!Crcflg)
+					myWrite( transferringFileD, blkBuf, BLK_SZ );
 			else
-				myWrite(transferringFileD, blkBuf, BLK_SZ_CRC);
+					myWrite( transferringFileD, blkBuf, BLK_SZ_CRC );
+
 			// assume sent block will be ACK'd
 			genBlk(blkBuf); // prepare next block
-							// assume sent block was ACK'd
+			// assume sent block was ACK'd
 		};
 		// finish up the protocol, assuming the receiver behaves normally
 		// ********* fill in some code here ***********
-		if (!bytesRd)
-		{
-			//blkT lastBlock;
-			//lastBlock[0]=EOT;
-			sendByte(EOT);
-		}
-
+		if(!bytesRd)
+				{
+					sendByte(EOT);
+					sendByte(EOT);
+				}
 		//(myClose(transferringFileD));
 		if (-1 == myClose(transferringFileD))
 			ErrorPrinter("myClose(transferringFileD)", __FILE__, __LINE__, errno);

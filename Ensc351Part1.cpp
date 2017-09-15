@@ -18,7 +18,7 @@ using namespace std;
 
 int testSenderX() {
 #ifdef __MINGW32__
-	//_fmode = _O_BINARY;  // needed for MinGW compiler which runs on MS Windows
+//	_fmode = _O_BINARY;  // needed for MinGW compiler which runs on MS Windows
 #endif
 
 	const char* oFileName = "xmodem_sender_data.dat";
