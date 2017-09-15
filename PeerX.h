@@ -9,7 +9,7 @@
 
 #include <stdint.h> // for uint8_t
 
-#define CHUNK_SZ	 5
+#define CHUNK_SZ	 128
 #define SOH_OH  	 1			//SOH Byte Overhead
 #define BLK_NUM_AND_COMP_OH  2	//Overhead for blkNum and its complement
 #define DATA_POS  	 (SOH_OH + BLK_NUM_AND_COMP_OH)	//Position of data in buffer
