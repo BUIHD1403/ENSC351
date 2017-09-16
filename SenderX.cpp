@@ -93,14 +93,18 @@ void SenderX::genBlk(blkT blkBuf)
 		else
 		{
 			uint16_t crc;
-			uint8_t A[128] ;
-			//blkT tempBuf;
-
+			
+			//Created a temporary block buffer to calculate //data, because the first 3 cells we put SOH, blkNumber which //are not real data. Temporary block buffer will only contains //data
+			uint8_t tempBuf[128] ;
 			for(int i=0; i < CHUNK_SZ;i++)
 			{
-				A[i]=blkBuf[i+3];
+				tempBuf[i]=blkBuf[i+3];
 			}
-			crc16ns(&crc, A);
+
+			//Function crc16ns gonna calculte crc
+			crc16ns(&crc, tempBuf);
+
+			//Now crc we got is 16 bytes, but each cell in //the array is 8 bytes, so we separate it here
 			blkBuf[131]=(uint8_t)(crc>>8);
 			blkBuf[132]=(uint8_t)(crc);
 
@@ -144,9 +148,11 @@ void SenderX::sendFile()
 		// ********* fill in some code here ***********
 			sendByte(EOT);
 			sendByte(EOT);
+	
 		//(myClose(transferringFileD));
 		if (-1 == myClose(transferringFileD))
 			ErrorPrinter("myClose(transferringFileD)", __FILE__, __LINE__, errno);
 		result = "Done";
 	}
 }
+
