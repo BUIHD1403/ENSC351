@@ -94,7 +94,7 @@ void SenderX::genBlk(blkT blkBuf)
 		{
 			uint16_t crc;
 			
-			//Created a temporary block buffer to calculate //data, because the first 3 cells we put SOH, blkNumber which //are not real data. Temporary block buffer will only contains //data
+			/*Created a temporary block buffer to calculate data, because the first 3 cells we put SOH, blkNumber which are not real data. Temporary block buffer will only contains data*/
 			uint8_t tempBuf[128] ;
 			for(int i=0; i < CHUNK_SZ;i++)
 			{
@@ -104,7 +104,7 @@ void SenderX::genBlk(blkT blkBuf)
 			//Function crc16ns gonna calculte crc
 			crc16ns(&crc, tempBuf);
 
-			//Now crc we got is 16 bytes, but each cell in //the array is 8 bytes, so we separate it here
+			/*Now crc we got is 16 bytes, but each cell in the array is 8 bytes, so we separate it here*/
 			blkBuf[131]=(uint8_t)(crc>>8);
 			blkBuf[132]=(uint8_t)(crc);
 
