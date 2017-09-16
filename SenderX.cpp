@@ -64,29 +64,52 @@ void SenderX::genBlk(blkT blkBuf)
 		ErrorPrinter("myRead(transferringFileD, &blkBuf[0], CHUNK_SZ )", __FILE__, __LINE__, errno);
 	// ********* and additional code must be written ***********
 	else
+		//Fill in the gap with CTRL_Z
 	{	if(bytesRd<128)
 		{
-			for(int i=bytesRd; i<CHUNK_SZ;i++)
+			for(int i=bytesRd; i<=CHUNK_SZ;i++)
 			{
 				blkBuf[i+3]=CTRL_Z;  // Fill in the gap w/ CTRL_Z
 			}
 		}
-		blkBuf[0]=SOH;
-		blkBuf[1]=blkNum;
-		blkBuf[2]=255-blkNum;
 
+		//Fill in the first 3 cells
+		blkBuf[0]=SOH_OH;
+		blkBuf[1]=blkNum+1;
+		blkBuf[2]=255-(blkNum+1);
+
+		// Set up Check-Sum status
 		if(!Crcflg)
-		{	int sum=0;
-			for(int i= 3; i< CHUNK_SZ+3;i++)	sum+=blkBuf[i];
+		{	uint8_t sum=0;
+			for(int i= 3; i< CHUNK_SZ+3;i++)
+			{
+				sum+=blkBuf[i];
+
+			}
 			blkBuf[131]=sum%256;
 		}
+
+		//Set up CRC status
 		else
 		{
 			uint16_t crc;
-			crc16ns(&crc, blkBuf);
-			blkBuf[131]=(int)crc>>8;
-			blkBuf[132]=(int)crc;
+			
+			//Created a temporary block buffer to calculate //data, because the first 3 cells we put SOH, blkNumber which //are not real data. Temporary block buffer will only contains //data
+			uint8_t tempBuf[128] ;
+			for(int i=0; i < CHUNK_SZ;i++)
+			{
+				tempBuf[i]=blkBuf[i+3];
+			}
+
+			//Function crc16ns gonna calculte crc
+			crc16ns(&crc, tempBuf);
+
+			//Now crc we got is 16 bytes, but each cell in //the array is 8 bytes, so we separate it here
+			blkBuf[131]=(uint8_t)(crc>>8);
+			blkBuf[132]=(uint8_t)(crc);
+
 		}
+
 	}
 }
 
@@ -113,9 +136,9 @@ void SenderX::sendFile()
 
 			// ********* fill in some code here to send a block ***********
 			if(!Crcflg)
-					myWrite( transferringFileD, blkBuf, BLK_SZ );
+					myWrite( mediumD, blkBuf, BLK_SZ );
 			else
-					myWrite( transferringFileD, blkBuf, BLK_SZ_CRC );
+					myWrite( mediumD, blkBuf, BLK_SZ_CRC );
 
 			// assume sent block will be ACK'd
 			genBlk(blkBuf); // prepare next block
@@ -123,11 +146,9 @@ void SenderX::sendFile()
 		};
 		// finish up the protocol, assuming the receiver behaves normally
 		// ********* fill in some code here ***********
-		if(!bytesRd)
-				{
-					sendByte(EOT);
-					sendByte(EOT);
-				}
+			sendByte(EOT);
+			sendByte(EOT);
+	
 		//(myClose(transferringFileD));
 		if (-1 == myClose(transferringFileD))
 			ErrorPrinter("myClose(transferringFileD)", __FILE__, __LINE__, errno);
