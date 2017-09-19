@@ -1,17 +1,18 @@
 //============================================================================
 //
-//% Student Name 1: student1
-//% Student 1 #: 123456781
-//% Student 1 userid (email): stu1 (stu1@sfu.ca)
+//% Student Name 1: HuyThong Bui
+//% Student 1 #: 301 2697 83
+//% Student 1 userid (email): htbui (htbui@sfu.ca)
 //
-//% Student Name 2: student2
-//% Student 2 #: 123456782
-//% Student 2 userid (email): stu2 (stu2@sfu.ca)
+//% Student Name 2: Yixin Hu
+//% Student 2 #: 301 270 614
+//% Student 2 userid (email): huyixinh (huyixinh@sfu.ca)
 //
+////Group: P1_htbui_huyixinh
 //% Below, edit to list any people who helped you with the code in this file,
 //%      or put 'None' if nobody helped (the two of) you.
 //
-// Helpers: _everybody helped us/me with the assignment (list names or put 'None')__
+// Helpers: _everybody helped us/me with the assignment (list names or put 'None')_None_
 //
 // Also, list any resources beyond the course textbooks and the course pages on Piazza
 // that you used in making your submission.
@@ -60,7 +61,7 @@ prepared or if the input file is empty (i.e. has 0 length).
 void SenderX::genBlk(blkT blkBuf)
 {
 	// ********* The next line needs to be changed ***********
-	if (-1 == (bytesRd = myRead(transferringFileD, &blkBuf[3], CHUNK_SZ )))
+	if (-1 == (bytesRd = myRead(transferringFileD, &blkBuf[DATA_POS], CHUNK_SZ )))
 		ErrorPrinter("myRead(transferringFileD, &blkBuf[0], CHUNK_SZ )", __FILE__, __LINE__, errno);
 	// ********* and additional code must be written ***********
 	else
@@ -81,38 +82,31 @@ void SenderX::genBlk(blkT blkBuf)
 		// Set up Check-Sum status
 		if(!Crcflg)
 		{	uint8_t sum=0;
-			for(int i= 3; i< CHUNK_SZ+3;i++)
+			for(int i= 3; i< PAST_CHUNK;i++)
 			{
 				sum+=blkBuf[i];
 
 			}
-			blkBuf[131]=sum%256;
+			blkBuf[PAST_CHUNK]=sum%256;
 		}
 
 		//Set up CRC status
 		else
 		{
 			uint16_t crc;
-			
-			//Created a temporary block buffer to calculate //data, because the first 3 cells we put SOH, blkNumber which //are not real data. Temporary block buffer will only contains //data
-			uint8_t tempBuf[128] ;
+			uint8_t tempArr[128] ;
+			//blkT tempBuf;
 			for(int i=0; i < CHUNK_SZ;i++)
-			{
-				tempBuf[i]=blkBuf[i+3];
-			}
-
-			//Function crc16ns gonna calculte crc
-			crc16ns(&crc, tempBuf);
-
-			//Now crc we got is 16 bytes, but each cell in //the array is 8 bytes, so we separate it here
+					{
+						tempArr[i]=blkBuf[i+3];
+					}
+			crc16ns(&crc, tempArr);
 			blkBuf[131]=(uint8_t)(crc>>8);
 			blkBuf[132]=(uint8_t)(crc);
 
 		}
-
 	}
 }
-
 void SenderX::sendFile()
 {
 	transferringFileD = myOpen(fileName, O_RDWR, 0);

@@ -1,17 +1,18 @@
 //============================================================================
 //
-//% Student Name 1: student1
-//% Student 1 #: 123456781
-//% Student 1 userid (email): stu1 (stu1@sfu.ca)
+//% Student Name 1: HuyThong Bui
+//% Student 1 #: 301 2697 83
+//% Student 1 userid (email): htbui (htbui@sfu.ca)
 //
-//% Student Name 2: student2
-//% Student 2 #: 123456782
-//% Student 2 userid (email): stu2 (stu2@sfu.ca)
+//% Student Name 2: Yixin Hu
+//% Student 2 #: 301 270 614
+//% Student 2 userid (email): huyixinh (huyixinh@sfu.ca)
 //
+//Group: P1_htbui_huyixinh
 //% Below, edit to list any people who helped you with the code in this file,
 //%      or put 'None' if nobody helped (the two of) you.
 //
-// Helpers: _everybody helped us/me with the assignment (list names or put 'None')__
+// Helpers: _everybody helped us/me with the assignment (list names or put 'None')__None
 //
 // Also, list any resources beyond the course textbooks and the course pages on Piazza
 // that you used in making your submission.
