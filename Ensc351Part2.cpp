@@ -61,10 +61,10 @@ void termFunc(int termNum)
 		COUT << "Will try to receive to file:  " << receiverFileName << endl;
 		//ReceiverX xReceiver(daSktPr[Term1], receiverFileName);
 
-		ReceiverX xReceiver(daSktPrT1M[MediumSkt], receiverFileName);  // ?
+		ReceiverX xReceiver(daSktPrT1M[TermSkt], receiverFileName);  // ?
 		xReceiver.receiveFile();
 		COUT << "xReceiver result was: " << xReceiver.result << endl;
-		PE(myClose(daSktPrT1M[TermSkt]));	// ?
+		PE(myClose(daSktPrT1M[TermSkt]));
 	}
 	else {
 		PE_0(pthread_setname_np(pthread_self(), "T2")); // give the thread (terminal 2) a name
@@ -75,16 +75,16 @@ void termFunc(int termNum)
 		COUT << "Will try to send the file:  " << senderFileName << endl;
 		//SenderX xSender(senderFileName, daSktPr[Term2]);
 
-		SenderX xSender(senderFileName, daSktPrMT2[MediumSkt]);  //?
+		SenderX xSender(senderFileName, daSktPrMT2[TermSkt]); // ?
 		xSender.sendFile();
 		COUT << "xSender result was: " << xSender.result << endl;
-		PE(myClose(daSktPrMT2[TermSkt]));	// ?
+		PE(myClose(daSktPrMT2[TermSkt]));
 	}
     std::this_thread::sleep_for (std::chrono::milliseconds(1));
-//	PE(myClose(daSktPr[termNum]));
+    //PE(myClose(daSktPr[termNum]));
 }
 
-/// ***** you will need this at some point *****
+// ***** you will need this at some point *****
 void mediumFunc(void)
 {
 	PE_0(pthread_setname_np(pthread_self(), "M")); // give the thread (medium) a name
@@ -101,17 +101,18 @@ int main()
 
 	// ***** switch from having one socketpair for direct connection to having two socketpairs
 	//			for connection through medium thread *****
-	PE(mySocketpair(AF_LOCAL, SOCK_STREAM, 0, daSktPrT1M));		//Socket btwn term1 an medium
-	PE(mySocketpair(AF_LOCAL, SOCK_STREAM, 0, daSktPrMT2));		////Socket btwn medium an term2
+	PE(mySocketpair(AF_LOCAL, SOCK_STREAM, 0, daSktPrT1M));		// ?
+	PE(mySocketpair(AF_LOCAL, SOCK_STREAM, 0, daSktPrMT2));		// ?
 	//daSktPr[Term1] =  PE(/*myO*/open("/dev/ser2", O_RDWR));
 
 	thread term2Thrd(termFunc, Term2);
-	thread mediummThrd(mediumFunc);
 
 	// ***** create thread for medium *****
 
 	termFunc(Term1);
+	thread mediumThrd(mediumFunc);	// ?
 
+	mediumThrd.join();
 	term2Thrd.join();
 	// ***** join with thread for medium *****
 

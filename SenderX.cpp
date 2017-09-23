@@ -136,13 +136,20 @@ void SenderX::genBlk(uint8_t blkBuf[BLK_SZ_CRC])
 void SenderX::prep1stBlk()
 {
 	// **** this function will need to be modified ****
-	genBlk(blkBuf);
+	genBlk(blkBufs[0]);
+	for(int i=0; i< BLK_SZ_CRC; i++)
+	{
+		blkBufs[1][i] = blkBufs[0][i] ;
+	}
+	//genBlk(blkBufs[1]);
 }
 
 
 void SenderX::cs1stBlk()
 {
 	// **** this function will need to be modified ****
+//	blkBufs[0]
+
 }
 
 /* while sending the now current block for the first time, prepare the next block if possible.
@@ -151,8 +158,8 @@ void SenderX::sendBlkPrepNext()
 {
 	// **** this function will need to be modified ****
 	blkNum ++; // 1st block about to be sent or previous block ACK'd
-	uint8_t lastByte = sendMostBlk(blkBuf);
-	genBlk(blkBuf); // prepare next block
+	uint8_t lastByte = sendMostBlk(blkBufs[0]);
+	genBlk(blkBufs[0]); // prepare next block
 	sendLastByte(lastByte);
 }
 
@@ -207,11 +214,18 @@ void SenderX::sendFile()
 		PE_NOT(myRead(mediumD, &byteToReceive, 1), 1); // assuming get a 'C'
 		Crcflg = true;
 
+		//Just added to call cs1st
+		if(byteToReceive!='C')
+				{
+					cs1stBlk();
+				}
+
 		while (bytesRd) {
 			sendBlkPrepNext();
 			// assuming below we get an ACK
 			PE_NOT(myRead(mediumD, &byteToReceive, 1), 1);
 		}
+
 		sendByte(EOT); // send the first EOT
 		PE_NOT(myRead(mediumD, &byteToReceive, 1), 1); // assuming get a NAK
 		sendByte(EOT); // send the second EOT
