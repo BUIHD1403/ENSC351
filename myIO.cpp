@@ -5,7 +5,15 @@
  */
 
 #include <unistd.h>			// for read/write/close
-#include <fcntl.h>	// for open/creat
+#include <fcntl.h>			// for open/creat
+#include <sys/socket.h> 		// for socketpair
+#include "SocketReadcond.h"
+
+int mySocketpair( int domain, int type, int protocol, int des[2] )
+{
+	int returnVal = socketpair(domain, type, protocol, des);
+	return returnVal;
+}
 
 int myOpen(const char *pathname, int flags, mode_t mode)
 {
@@ -31,3 +39,14 @@ int myClose( int fd )
 {
 	return close(fd);
 }
+
+int myTcdrain(int des)
+{ //is also included for purposes of the course.
+	return 0;
+}
+
+int myReadcond(int des, void * buf, int n, int min, int time, int timeout)
+{
+	return wcsReadcond(des, buf, n, min, time, timeout );
+}
+

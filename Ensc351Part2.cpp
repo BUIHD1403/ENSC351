@@ -59,12 +59,12 @@ void termFunc(int termNum)
 	if (termNum == Term1) {
 		const char *receiverFileName = "transferredFile";
 		COUT << "Will try to receive to file:  " << receiverFileName << endl;
-		//ReceiverX xReceiver(daSktPr[Term1], receiverFileName);----Craig's code
+		//ReceiverX xReceiver(daSktPr[Term1], receiverFileName);
 
 		ReceiverX xReceiver(daSktPrT1M[MediumSkt], receiverFileName);  // ?
 		xReceiver.receiveFile();
 		COUT << "xReceiver result was: " << xReceiver.result << endl;
-		PE(myClose(daSktPrT1M[TermSkt]));
+		PE(myClose(daSktPrT1M[TermSkt]));	// ?
 	}
 	else {
 		PE_0(pthread_setname_np(pthread_self(), "T2")); // give the thread (terminal 2) a name
@@ -73,18 +73,18 @@ void termFunc(int termNum)
 		// const char *senderFileName = "/etc/printers/epijs.cfg"; // for QNX 6.5 target
 		// const char *senderFileName = "/etc/system/sapphire/PasswordManager.tr"; // for BB Playbook target
 		COUT << "Will try to send the file:  " << senderFileName << endl;
-		//SenderX xSender(senderFileName, daSktPr[Term2]);---Craig's code
+		//SenderX xSender(senderFileName, daSktPr[Term2]);
 
-		SenderX xSender(senderFileName, daSktPrMT2[MediumSkt]);
+		SenderX xSender(senderFileName, daSktPrMT2[MediumSkt]);  //?
 		xSender.sendFile();
 		COUT << "xSender result was: " << xSender.result << endl;
-		PE(myClose(daSktPrMT2[TermSkt]));
+		PE(myClose(daSktPrMT2[TermSkt]));	// ?
 	}
     std::this_thread::sleep_for (std::chrono::milliseconds(1));
 //	PE(myClose(daSktPr[termNum]));
 }
 
- // ***** you will need this at some point *****
+/// ***** you will need this at some point *****
 void mediumFunc(void)
 {
 	PE_0(pthread_setname_np(pthread_self(), "M")); // give the thread (medium) a name
@@ -106,10 +106,9 @@ int main()
 	//daSktPr[Term1] =  PE(/*myO*/open("/dev/ser2", O_RDWR));
 
 	thread term2Thrd(termFunc, Term2);
-	thread medmThrd(mediumFunc);
+	thread mediummThrd(mediumFunc);
 
-
-	// ***** create thread for medium, make its priority 2 levels lower (i.e. priority 2) *****
+	// ***** create thread for medium *****
 
 	termFunc(Term1);
 
