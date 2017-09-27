@@ -148,8 +148,12 @@ void SenderX::prep1stBlk()
 void SenderX::cs1stBlk()
 {
 	// **** this function will need to be modified ****
-//	blkBufs[0]
-
+	int sum=0;
+	for(int i=DATA_POS; i<PAST_CHUNK;i++)
+	{
+		sum+=blkBufs[0][i];
+	}
+	blkBufs[0][PAST_CHUNK]=sum;
 }
 
 /* while sending the now current block for the first time, prepare the next block if possible.
@@ -214,29 +218,88 @@ void SenderX::sendFile()
 		PE_NOT(myRead(mediumD, &byteToReceive, 1), 1); // assuming get a 'C'
 		Crcflg = true;
 
-		//Just added to call cs1st
-		if(byteToReceive!='C')
-				{
-					cs1stBlk();
-				}
+		//Added
+		if( (byteToReceive==NAK|| byteToReceive=='C') && bytesRd)
+		{
+			if(byteToReceive==NAK)
 
-		while (bytesRd) {
+				{
+					Crcflg=false;
+					cs1stBlk();
+					firstCrcBlk=false;
+				}
 			sendBlkPrepNext();
-			// assuming below we get an ACK
 			PE_NOT(myRead(mediumD, &byteToReceive, 1), 1);
 		}
 
-		sendByte(EOT); // send the first EOT
-		PE_NOT(myRead(mediumD, &byteToReceive, 1), 1); // assuming get a NAK
-		sendByte(EOT); // send the second EOT
-		PE_NOT(myRead(mediumD, &byteToReceive, 1), 1); // assuming get an ACK
+		while(bytesRd)
+				{
+					firstCrcBlk=false;
+					errCnt=0;
+
+					sendBlkPrepNext();
+					PE_NOT(myRead(mediumD, &byteToReceive, 1), 1);
+
+
+					if( (byteToReceive==NAK || byteToReceive=='C') && (errCnt < errB) )
+					{
+								errCnt++;
+								resendBlk();
+								PE_NOT(myRead(mediumD, &byteToReceive, 1), 1);
+					}
+				}
+
+		if(!bytesRd)
+			    {
+				if(byteToReceive==NAK || byteToReceive=='C')
+			    		{	if(byteToReceive==NAK)
+			    					{ firstCrcBlk=false;	}
+			    			sendByte(EOT);
+			    			PE_NOT(myRead(mediumD, &byteToReceive, 1), 1);
+			      		}
+
+				else if(byteToReceive==ACK)
+			    {
+			    	sendByte(EOT);
+			    	PE_NOT(myRead(mediumD, &byteToReceive, 1), 1);
+			    	errCnt=0;
+			    	firstCrcBlk=false;
+			    }
+
+				if(byteToReceive==NAK)
+				{
+					sendByte(EOT);
+				  	PE_NOT(myRead(mediumD, &byteToReceive, 1), 1);
+				}
+				else if(byteToReceive==ACK)
+				{
+					result="1st EOT ACK'd";
+					return;
+				}
+
+				if(byteToReceive==ACK)
+				{
+					result="Done";
+					return;
+				}
+				else if(byteToReceive==CAN)
+				{
+					result="RcvCancelled";
+					tclearCan()*;
+				}
+
+
+		//sendByte(EOT); // send the first EOT
+		//PE_NOT(myRead(mediumD, &byteToReceive, 1), 1); // assuming get a NAK
+		//sendByte(EOT); // send the second EOT
+		//PE_NOT(myRead(mediumD, &byteToReceive, 1), 1); // assuming get an ACK
 
 		PE(myClose(transferringFileD));
 		/*
 		if (-1 == myClose(transferringFileD))
 			VNS_ErrorPrinter("myClose(transferringFileD)", __func__, __FILE__, __LINE__, errno);
 		*/
-		result = "Done";  // should this be moved above somewhere??
+		//result = "Done";  // should this be moved above somewhere??
 	}
 }
 
