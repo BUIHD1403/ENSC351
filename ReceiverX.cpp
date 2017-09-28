@@ -68,7 +68,9 @@ void ReceiverX::receiveFile()
 	{
 		getRestBlk();
 		sendByte(ACK);
-		writeChunk();
+
+		if(goodBlk1st)
+			writeChunk();
 	};
 	// EOT was presumably just read in the condition for the while loop
 	sendByte(NAK); // NAK the first EOT
@@ -88,12 +90,36 @@ variable goodBlk1st will be made true if this is the first
 time that the block was received in "good" condition.
 */
 void ReceiverX::getRestBlk()
-{
-	// ********* this function must be improved ***********
+{	// ********* this function must be improved ***********
 	PE_NOT(myReadcond(mediumD, &rcvBlk[1], REST_BLK_SZ_CRC, REST_BLK_SZ_CRC, 0, 0), REST_BLK_SZ_CRC);
 	goodBlk1st = goodBlk = true;
-}
+	//Added
+	if( rcvBlk[SOH_OH]+rcvBlk[BLK_NUM_AND_COMP_OH]==255 )
+		{
+			if(!Crcflg)
+			{
+				int sumCheck=0;
+				for(int i=DATA_POS; i<PAST_CHUNK;i++)
+					sumCheck+=rcvBlk[i];
+				if(sumCheck!=rcvBlk[PAST_CHUNK])
+				{
+					goodBlk1st = goodBlk = false;
+					return;
+				}
+			}
+			else
+				{	uint16_t* crc16Check;
+					crc16ns (crc16Check, rcvBlk);
+					if( (crc16Check>>8)!=rcvBlk[131] || (crc16Check)!=rcvBlk[132])
+					{
+						goodBlk1st = goodBlk = false;
+						return;
+					}
+				}
 
+		}
+	numLastGoodBlk++;
+}
 //Write chunk (data) in a received block to disk
 void ReceiverX::writeChunk()
 {

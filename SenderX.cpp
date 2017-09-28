@@ -170,6 +170,8 @@ void SenderX::sendBlkPrepNext()
 // Resends the block that had been sent previously to the xmodem receiver
 void SenderX::resendBlk()
 {
+	uint8_t lastByte = sendMostBlk(blkBufs[1]);
+	genBlk(blkBufs[1]);
 	// resend the block including the checksum
 	//  ***** You will have to write this simple function *****
 }
@@ -219,74 +221,92 @@ void SenderX::sendFile()
 		Crcflg = true;
 
 		//Added
-		if( (byteToReceive==NAK|| byteToReceive=='C') && bytesRd)
-		{
-			if(byteToReceive==NAK)
 
+		if(byteToReceive==NAK|| byteToReceive=='C')
+		{
+			if(bytesRd)
+			{
+				if(byteToReceive==NAK)
 				{
 					Crcflg=false;
 					cs1stBlk();
 					firstCrcBlk=false;
 				}
-			sendBlkPrepNext();
+				sendBlkPrepNext();
+				PE_NOT(myRead(mediumD, &byteToReceive, 1), 1);
+
+				while(bytesRd)
+							{
+								for(int i=0; i< BLK_SZ_CRC; i++)
+									blkBufs[1][i] = blkBufs[0][i] ;
+
+								if(byteToReceive==ACK)
+								{	firstCrcBlk=false;
+									errCnt=0;
+
+									sendBlkPrepNext();
+									PE_NOT(myRead(mediumD, &byteToReceive, 1), 1);
+								}
+								if( (byteToReceive==NAK || ( byteToReceive=='C' && firstCrcBlk)) && (errCnt < errB) )
+								{
+									errCnt++;
+									resendBlk();
+									PE_NOT(myRead(mediumD, &byteToReceive, 1), 1);
+								}
+
+								if(errCnt >= errB)
+								{
+									can8();
+									result="ExcessiveNAKs";
+									PE(myClose(transferringFileD));
+									return;
+								}
+								if(byteToReceive==CAN)
+								{
+									PE(myClose(transferringFileD));
+									return;
+								}
+							 }
+			}
+
+			if(!bytesRd)
+				{
+					if(byteToReceive==NAK)
+							firstCrcBlk=false;
+					sendByte(EOT);
+					PE_NOT(myRead(mediumD, &byteToReceive, 1), 1);
+				}
+			}
+
+		if(byteToReceive==ACK)
+    		    {
+					if(!bytesRd)
+    			 	{
+						sendByte(EOT);
+						PE_NOT(myRead(mediumD, &byteToReceive, 1), 1);
+						errCnt=0;
+						firstCrcBlk=false;
+    			 	}
+					else
+					{
+						result="1st EOT ACK'd";
+						PE(myClose(transferringFileD));
+						return;
+					}
+    		    }
+
+		if(byteToReceive==NAK)
+		{
+			sendByte(EOT);
 			PE_NOT(myRead(mediumD, &byteToReceive, 1), 1);
+			if(byteToReceive==ACK)
+			{
+				result="Done";
+				PE(myClose(transferringFileD));
+				return;
+			}
 		}
 
-		while(bytesRd)
-				{
-					firstCrcBlk=false;
-					errCnt=0;
-
-					sendBlkPrepNext();
-					PE_NOT(myRead(mediumD, &byteToReceive, 1), 1);
-
-
-					if( (byteToReceive==NAK || byteToReceive=='C') && (errCnt < errB) )
-					{
-								errCnt++;
-								resendBlk();
-								PE_NOT(myRead(mediumD, &byteToReceive, 1), 1);
-					}
-				}
-
-		if(!bytesRd)
-			    {
-				if(byteToReceive==NAK || byteToReceive=='C')
-			    		{	if(byteToReceive==NAK)
-			    					{ firstCrcBlk=false;	}
-			    			sendByte(EOT);
-			    			PE_NOT(myRead(mediumD, &byteToReceive, 1), 1);
-			      		}
-
-				else if(byteToReceive==ACK)
-			    {
-			    	sendByte(EOT);
-			    	PE_NOT(myRead(mediumD, &byteToReceive, 1), 1);
-			    	errCnt=0;
-			    	firstCrcBlk=false;
-			    }
-
-				if(byteToReceive==NAK)
-				{
-					sendByte(EOT);
-				  	PE_NOT(myRead(mediumD, &byteToReceive, 1), 1);
-				}
-				else if(byteToReceive==ACK)
-				{
-					result="1st EOT ACK'd";
-					return;
-				}
-
-				if(byteToReceive==ACK)
-				{
-					result="Done";
-					return;
-				}
-				else if(byteToReceive==CAN)
-				{
-					result="RcvCancelled";
-					tclearCan()*;
-				}
 
 
 		//sendByte(EOT); // send the first EOT
